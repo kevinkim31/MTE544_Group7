@@ -1,4 +1,4 @@
-# LAB 1 - Sensor data processing for mobile robots (lucy testing)
+# LAB 1 - Sensor data processing for mobile robots
 
 ## Introduction
 
