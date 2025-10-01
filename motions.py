@@ -40,7 +40,7 @@ class motion_executioner(Node):
         self.laser_initialized=False
         
         # TODO Part 3: Create a publisher to send velocity commands by setting the proper parameters in (...)
-        self.vel_publisher=self.create_publisher(...)
+        self.vel_publisher=self.create_publisher(Twist, '/cmd_vel', 10)
                 
         # loggers
         self.imu_logger=Logger('imu_content_'+str(motion_types[motion_type])+'.csv', headers=["acc_x", "acc_y", "angular_z", "stamp"])
@@ -48,20 +48,17 @@ class motion_executioner(Node):
         self.laser_logger=Logger('laser_content_'+str(motion_types[motion_type])+'.csv', headers=["ranges", "angle_increment", "stamp"])
         
         # TODO Part 3: Create the QoS profile by setting the proper parameters in (...)
-        qos=QoSProfile(...)
+        qos=QoSProfile(reliability=2, durability=2, history=1, depth=10)
 
         # TODO Part 5: Create below the subscription to the topics corresponding to the respective sensors
         # IMU subscription
-        
-        ...
-        
-        # ENCODER subscription
+        self.create_subscription(Imu, '/imu', self.imu_callback, qos_profile=qos)
 
-        ...
-        
+        # ENCODER subscription
+        self.create_subscription(Odometry, '/odom', self.odom_callback, qos_profile=qos)
+
         # LaserScan subscription 
-        
-        ...
+        self.create_subscription(LaserScan, '/scan', self.laser_callback, qos_profile=qos)
         
         self.create_timer(0.1, self.timer_callback)
 
@@ -111,20 +108,33 @@ class motion_executioner(Node):
     
     # TODO Part 4: Motion functions: complete the functions to generate the proper messages corresponding to the desired motions of the robot
 
+    # function for circular motion
     def make_circular_twist(self):
-        
         msg=Twist()
-        ... # fill up the twist msg for circular motion
+        # forward velocity (m/s)
+        msg.linear.x = LINEAR_VELOCITY # test values in lab
+        # rotational velocity around the vertical axis (rad/s)
+        msg.angular.z = ANGULAR_VELOCITY # test values in lab
         return msg
 
+    # function for spiral motion
     def make_spiral_twist(self):
         msg=Twist()
-        ... # fill up the twist msg for spiral motion
+        # forward velocity
+        msg.linear.x = LINEAR_VELOCITY # test values in lab
+        # increasing the radius of the spiral
+        self.radius_ += 0.01 # test values in lab
+        # setting the angular velocity based on the radius
+        msg.angular.z = msg.linear.x / self.radius_
         return msg
     
+    # function for accelerated line motion
     def make_acc_line_twist(self):
         msg=Twist()
-        ... # fill up the twist msg for line motion
+        # forward acceleration
+        msg.linear.x += 0.01 # test values in lab
+        # no rotation
+        msg.angular.z = 0.0
         return msg
 
 import argparse
