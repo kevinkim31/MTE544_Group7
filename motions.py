@@ -70,15 +70,57 @@ class motion_executioner(Node):
     # You can save the needed fields into a list, and pass the list to the log_values function in utilities.py
 
     def imu_callback(self, imu_msg: Imu):
-        ...    # log imu msgs
-        
+
+        self.imu_initialized=True
+
+        # Get timestamp from message (timestamp is always in the message header)
+        timestamp = Time.from_msg(imu_msg.header.stamp).nanoseconds
+
+        # Get message data = linear accelerations for x, y & angular velocity for z
+        imu_acc_x = imu_msg.linear_acceleration.x
+        imu_acc_y = imu_msg.linear_acceleration.y
+        imu_angular_z = imu_msg.angular_velocity.z
+
+        # Combine data into list
+        imu_data_list = [imu_acc_x, imu_acc_y, imu_angular_z, timestamp]
+
+        # Log the list
+        self.imu_logger.log_values(imu_data_list)
+
     def odom_callback(self, odom_msg: Odometry):
-        
-        ... # log odom msgs
-                
+
+        self.odom_initialized=True
+
+        # Get timestamp from message (timestamp is always in the message header)
+        timestamp = Time.from_msg(odom_msg.header.stamp).nanoseconds
+
+        # Get message data = position (x,y) & orientation (x,y,z,w)
+        odom_x_pos = odom_msg.pose.pose.position.x
+        odom_y_pos = odom_msg.pose.pose.position.y
+        odom_orientation = euler_from_quaternion(odom_msg.pose.pose.orientation) 
+
+        # Combine data into list
+        odom_data_list = [odom_x_pos, odom_y_pos, odom_orientation, timestamp]
+
+        # Log the list
+        self.odom_logger.log_values(odom_data_list)
+
     def laser_callback(self, laser_msg: LaserScan):
-        
-        ... # log laser msgs with position msg at that time
+
+        self.laser_initialized=True
+
+        # Get timestamp from message (timestamp is always in the message header)
+        timestamp = Time.from_msg(laser_msg.header.stamp).nanoseconds
+
+        # Get message data = ranges & angle increments
+        ranges = laser_msg.ranges
+        angle_increment = laser_msg.angle_increment
+
+        # Combine data into list
+        laser_data_list = [ranges, angle_increment, timestamp]
+
+        # Log the list
+        self.laser_logger.log_values(laser_data_list)
                 
     def timer_callback(self):
         
