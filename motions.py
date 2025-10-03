@@ -23,6 +23,8 @@ from rclpy.time import Time
 
 CIRCLE=0; SPIRAL=1; ACC_LINE=2
 motion_types=['circle', 'spiral', 'line']
+LINEAR_VELOCITY = 0.1
+ANGULAR_VELOCITY = 0.5
 
 class motion_executioner(Node):
     
@@ -33,6 +35,9 @@ class motion_executioner(Node):
         self.type=motion_type
         
         self.radius_=0.0
+        self.linear_speed =0.0
+        self.accel_lin = 0.05
+        
         
         self.successful_init=False
         self.imu_initialized=False
@@ -72,7 +77,7 @@ class motion_executioner(Node):
     def imu_callback(self, imu_msg: Imu):
 
         self.imu_initialized=True
-
+        # print("imu")
         # Get timestamp from message (timestamp is always in the message header)
         timestamp = Time.from_msg(imu_msg.header.stamp).nanoseconds
 
@@ -90,13 +95,16 @@ class motion_executioner(Node):
     def odom_callback(self, odom_msg: Odometry):
 
         self.odom_initialized=True
-
+        # print("odom")
         # Get timestamp from message (timestamp is always in the message header)
         timestamp = Time.from_msg(odom_msg.header.stamp).nanoseconds
 
         # Get message data = position (x,y) & orientation (x,y,z,w)
         odom_x_pos = odom_msg.pose.pose.position.x
         odom_y_pos = odom_msg.pose.pose.position.y
+        
+        # odom_orientation = euler_from_quaternion(odom_msg.pose.pose.orientation) 
+
         odom_q = odom_msg.pose.pose.orientation
         odom_orientation = euler_from_quaternion([odom_q.x, odom_q.y, odom_q.z, odom_q.w])
 
@@ -109,7 +117,7 @@ class motion_executioner(Node):
     def laser_callback(self, laser_msg: LaserScan):
 
         self.laser_initialized=True
-
+        # print("laser")
         # Get timestamp from message (timestamp is always in the message header)
         timestamp = Time.from_msg(laser_msg.header.stamp).nanoseconds
 
@@ -127,6 +135,7 @@ class motion_executioner(Node):
         
         if self.odom_initialized and self.laser_initialized and self.imu_initialized:
             self.successful_init=True
+            #print("true")
             
         if not self.successful_init:
             return
@@ -135,7 +144,7 @@ class motion_executioner(Node):
         
         if self.type==CIRCLE:
             cmd_vel_msg=self.make_circular_twist()
-        
+            print(cmd_vel_msg)
         elif self.type==SPIRAL:
             cmd_vel_msg=self.make_spiral_twist()
                         
@@ -166,16 +175,17 @@ class motion_executioner(Node):
         # forward velocity
         msg.linear.x = LINEAR_VELOCITY # test values in lab
         # increasing the radius of the spiral
-        self.radius_ += 0.01 # test values in lab
+        self.radius_ += 0.1 # test values in lab
         # setting the angular velocity based on the radius
         msg.angular.z = msg.linear.x / self.radius_
         return msg
     
     # function for accelerated line motion
     def make_acc_line_twist(self):
+        self.linear_speed += self.accel_lin
         msg=Twist()
         # forward acceleration
-        msg.linear.x += 0.01 # test values in lab
+        msg.linear.x += self.linear_speed
         # no rotation
         msg.angular.z = 0.0
         return msg
@@ -197,7 +207,7 @@ if __name__=="__main__":
     args = argParser.parse_args()
 
     if args.motion.lower() == "circle":
-
+        # print("test")
         ME=motion_executioner(motion_type=CIRCLE)
     elif args.motion.lower() == "line":
         ME=motion_executioner(motion_type=ACC_LINE)
