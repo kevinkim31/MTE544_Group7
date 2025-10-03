@@ -97,7 +97,8 @@ class motion_executioner(Node):
         # Get message data = position (x,y) & orientation (x,y,z,w)
         odom_x_pos = odom_msg.pose.pose.position.x
         odom_y_pos = odom_msg.pose.pose.position.y
-        odom_orientation = euler_from_quaternion(odom_msg.pose.pose.orientation) 
+        odom_q = odom_msg.pose.pose.orientation
+        odom_orientation = euler_from_quaternion([odom_q.x, odom_q.y, odom_q.z, odom_q.w])
 
         # Combine data into list
         odom_data_list = [odom_x_pos, odom_y_pos, odom_orientation, timestamp]
