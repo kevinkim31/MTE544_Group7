@@ -22,7 +22,7 @@ class PID_ctrl:
         self.ki=ki    # integral gain
         
         self.logger=Logger(filename_)
-        # Remeber that you are writing to the file named filename_ or errors.csv the following:
+        # Remember that you are writing to the file named filename_ or errors.csv the following:
             # error, error_dot, error_int and time stamp
 
     
@@ -81,11 +81,15 @@ class PID_ctrl:
         error_int=sum_*dt_avg
         
         # TODO Part 4: Log your errors
-        self.logger.log_values( ... )
+        # Log: error, error_dot, error_int, and timestamp
+        # Convert timestamp to nanoseconds for logging
+        timestamp_ns = Time.from_msg(stamp).nanoseconds
+        self.logger.log_values([latest_error, error_dot, error_int, timestamp_ns])
         
         # TODO Part 4: Implement the control law of P-controller
         if self.type == P:
-            return ... # complete
+            # P controller: output = Kp * error
+            return self.kp * latest_error
         
         # TODO Part 5: Implement the control law corresponding to each type of controller
         elif self.type == PD:
