@@ -89,10 +89,24 @@ def euler_from_quaternion(quat):
     Convert quaternion (w in last place) to euler roll, pitch, yaw.
     quat = [x, y, z, w]
     """
+        
+    # Args: quat: [x, y, z, w] - quaternion components
+    # Returns: yaw: rotation angle around the z-axis in radians
+    
+    # Note: This only extracts yaw (z-axis rotation), not roll and pitch.
 
-    # just unpack yaw
+    x = quat[0]
+    y = quat[1]
+    z = quat[2]
+    w = quat[3]
+    
+    # Calculate yaw (z-axis rotation) using the quaternion-to-euler conversion formula
+   
+    siny_cosp = 2 * (w * z + x * y)
+    cosy_cosp = 1 - 2 * (y * y + z * z)
+    yaw = atan2(siny_cosp, cosy_cosp)  # atan2 handles quadrant correctly
+    
     return yaw
-
 
 #TODO Part 4: Implement the calculation of the linear error
 def calculate_linear_error(current_pose, goal_pose):

@@ -56,13 +56,20 @@ class decision_maker(Node):
         # NOTE: goalPoint is used only for the pointPlanner
         self.goal=self.planner.plan(goalPoint)
 
+        # TODO Part 3: Error threshold
+        # Error thresholds to evaluate reached_goal
+        self.linear_threshold = 0.1 # m
+        self.angular_threshold = 0.1 # rad
+
         self.create_timer(publishing_period, self.timerCallback)
 
 
     def timerCallback(self):
         
         # TODO Part 3: Run the localization node
-        ...    # Remember that this file is already running the decision_maker node.
+        # Remember that this file is already running the decision_maker node.
+        # Spin the localizer once to process incoming odometry messages
+        spin_once(self.localizer)
 
         if self.localizer.getPose()  is  None:
             print("waiting for odom msgs ....")
@@ -71,12 +78,22 @@ class decision_maker(Node):
         vel_msg=Twist()
         
         # TODO Part 3: Check if you reached the goal
-        if type(self.goal) == list:
-            reached_goal=...
-        else: 
-            reached_goal=...
-        
+        # Get the current pose from the localizer
+        currPose = self.localizer.getPose()
 
+        # Check the type of goal
+        if type(self.goal) == list:
+            # Trajectory planner
+            # self.goal[-1] for final destination
+            # abs() to handle both +ve/-ve error values
+            # Both linear and angular error must be within thresholds
+            reached_goal= (abs(calculate_linear_error(currPose, self.goal[-1])) < self.linear_threshold and
+                           abs(calculate_angular_error(currPose, self.goal[-1])) < self.angular_threshold)
+        else: 
+            # Point planner - check single goal pose directly
+            reached_goal= (abs(calculate_linear_error(currPose, self.goal)) < self.linear_threshold and
+                           abs(calculate_angular_error(currPose, self.goal)) < self.angular_threshold)
+        
         if reached_goal:
             print("reached goal")
             self.publisher.publish(vel_msg)
@@ -85,7 +102,8 @@ class decision_maker(Node):
             self.controller.PID_linear.logger.save_log()
             
             #TODO Part 3: exit the spin
-            ... 
+            # Terminate the node and exit the spin loop
+            raise SystemExit
         
         velocity, yaw_rate = self.controller.vel_request(self.localizer.getPose(), self.goal, True)
 
@@ -102,9 +120,23 @@ def main(args=None):
     # TODO Part 3: You migh need to change the QoS profile based on whether you're using the real robot or in simulation.
     # Remember to define your QoS profile based on the information available in "ros2 topic info /odom --verbose" as explained in Tutorial 3
     
-    odom_qos=QoSProfile(reliability=2, durability=2, history=1, depth=10)
+    # TurtleBot 4
+    # QoS profile for high-frequency sensor data
+    # reliability=0: BEST_EFFORT (prioritizes low latency over guaranteed delivery)
+    # durability=2: VOLATILE (only sends to current subscribers, no stored messages)
+    # history=1: KEEP_LAST (keep only recent messages)
+    # depth=10: keep last 10 messages in queue
+    odom_qos = QoSProfile(reliability=0, durability=2, history=1, depth=10)
+        
+    # TurtleBot 3 Burger for simulation
+    # QoS profile for simulated sensor data
+    # reliability=2: RELIABLE (ensures all messages arrive, acceptable in simulation)
+    # durability=2: VOLATILE (only sends to current subscribers, no stored messages)
+    # history=1: KEEP_LAST (keep only recent messages)
+    # depth=10: keep last 10 messages in queue
+    # odom_qos = QoSProfile(reliability=2, durability=2, history=1, depth=10)
     
-
+    
     # TODO Part 4: instantiate the decision_maker with the proper parameters for moving the robot
     if args.motion.lower() == "point":
         DM=decision_maker(...)
