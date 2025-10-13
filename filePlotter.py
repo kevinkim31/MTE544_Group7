@@ -8,27 +8,29 @@ from typing import List, Tuple
 from utilities import FileReader
 
 def plot_errors(filename):
+    # Plot error values from a CSV file over time
     headers, values=FileReader(filename).read_file() 
     time_list=[]
+    # Use the first timestamp as reference point (time zero)
     first_stamp=values[0][-1]
     
+    # Convert all timestamps to relative time from start
     for val in values:
         time_list.append(val[-1] - first_stamp)
 
+    # Plot each column (except the last timestamp column) as a separate line
     for i in range(0, len(headers) - 1):
+        # Extract the i-th value from each row to create a time series
         plt.plot(time_list, [lin[i] for lin in values], label= headers[i]+ " linear")
     
-    #plt.plot([lin[0] for lin in values], [lin[1] for lin in values])
     plt.legend()
     plt.grid()
     plt.show()
-
 
 def _read_simple_csv(filename: str) -> Tuple[List[str], List[List[float]]]:
     # Helper function to read CSV files using the utilities module
     headers, values = FileReader(filename).read_file()
     return headers, values
-
 
 def plot_imu(filename: str):
     # Plot IMU accelerometer and gyroscope data vs time
@@ -36,9 +38,11 @@ def plot_imu(filename: str):
     if len(headers) < 4:
         raise ValueError("IMU file must contain acc_x, acc_y, angular_z, stamp")
 
-    # Convert timestamps from nanoseconds to seconds
-    t0 = rows[0][-1]
-    t = [(r[-1] - t0) / 1e9 for r in rows]  # seconds
+    # Convert timestamps from nanoseconds to seconds for readability
+    t0 = rows[0][-1]  # First timestamp as reference
+    t = [(r[-1] - t0) / 1e9 for r in rows]  # Divide by 1 billion to convert ns to seconds
+    
+    # Extract each sensor measurement into separate lists
     acc_x = [r[0] for r in rows]
     acc_y = [r[1] for r in rows]
     ang_z = [r[2] for r in rows]
@@ -55,7 +59,6 @@ def plot_imu(filename: str):
     plt.tight_layout()
     plt.show()
 
-
 def plot_odometry(filename: str):
     # Plot odometry data: trajectory and time series
     headers, rows = _read_simple_csv(filename)
@@ -65,22 +68,24 @@ def plot_odometry(filename: str):
     x_vals = [r[0] for r in rows]
     y_vals = [r[1] for r in rows]
     th_vals = [r[2] for r in rows]
+    
+    # Convert timestamps to relative seconds
     t0 = rows[0][-1]
     t_sec = [(r[-1] - t0) / 1e9 for r in rows]
 
-    # First plot: x-y trajectory
+    # First plot: x-y trajectory (bird's eye view of robot path)
     plt.figure()
     plt.plot(x_vals, y_vals, label='trajectory')
     plt.xlabel('x (m)')
     plt.ylabel('y (m)')
     plt.title('Odometry Trajectory (x-y)')
-    plt.axis('equal')
+    plt.axis('equal')  # Equal aspect ratio to avoid distortion
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
-    # Second plot: x, y, theta vs time
+    # Second plot: x, y, theta vs time (how each component changes over time)
     plt.figure()
     plt.plot(t_sec, x_vals, label='x (m)')
     plt.plot(t_sec, y_vals, label='y (m)')
@@ -93,22 +98,25 @@ def plot_odometry(filename: str):
     plt.tight_layout()
     plt.show()
 
-
 def _parse_laser_line(line: str):
     # Parse laser scan data from CSV format: array('f', [ranges]), angle_increment, stamp
-    # Extract ranges list between '[' and the matching ']'
+    #This handles the complex string format where ranges are stored as a Python array representation
+    
+    # Extract the ranges list between the square brackets
     start = line.find('[')
-    end = line.rfind(']')
+    end = line.rfind(']')  # rfind searches from the end to get the last ']'
     if start == -1 or end == -1 or end < start:
         raise ValueError('Malformed laser line: cannot find ranges list')
 
     ranges_str = line[start+1:end]
-    # Convert to list of floats without literal_eval; handle 'inf' and 'nan' strings
+    
+    # Convert string representations to actual float values
+    # Handle special cases: 'inf', 'nan', empty strings
     ranges: List[float] = []
     for tok in ranges_str.split(','):
         t = tok.strip()
         if t == '' or t.lower() == 'nan':
-            # Convert nan strings to actual NaN values
+            # Convert nan strings to actual NaN values for proper handling
             ranges.append(float('nan'))
             continue
         if t.lower() in ('inf', '+inf', 'infinity', '+infinity'):
@@ -123,14 +131,15 @@ def _parse_laser_line(line: str):
             # Skip any non-numeric artifacts
             continue
 
-    # Parse remaining fields after the ranges list
+    # Parse the remaining fields after the ranges list
     remainder = line[end+1:]
-    # Strip leading ")" and spaces
+    # Strip leading ")" from array format and whitespace
     remainder = remainder.lstrip()  
     if remainder.startswith(')'):
         remainder = remainder[1:]
     remainder = remainder.lstrip()
-    # Extract angle_increment and timestamp from remaining comma-separated values
+    
+    # Extract angle_increment and timestamp from comma-separated values
     nums: List[float] = []
     for part in remainder.split(','):
         s = part.strip()
@@ -138,7 +147,7 @@ def _parse_laser_line(line: str):
             continue
         try:
             nums.append(float(s))
-            if len(nums) >= 2:
+            if len(nums) >= 2:  # We only need two values
                 break
         except Exception:
             continue
@@ -147,9 +156,10 @@ def _parse_laser_line(line: str):
     angle_increment, stamp_ns = nums[0], nums[1]
     return ranges, angle_increment, stamp_ns
 
-
 def plot_all_odometry(line_file: str, circle_file: str, spiral_file: str):
-    # Plot all three motion trajectories (line, circle, spiral) on one graph for comparison
+    # Plot all three motion trajectories (line, circle, spiral) on one graph for comparison.
+    # Useful for visualizing different robot motion patterns side by side.
+    
     plt.figure()
     
     # Plot line trajectory
@@ -173,18 +183,20 @@ def plot_all_odometry(line_file: str, circle_file: str, spiral_file: str):
     plt.xlabel('x (m)')
     plt.ylabel('y (m)')
     plt.title('All Odometry Trajectories Comparison')
-    plt.axis('equal')
+    plt.axis('equal')  # Equal aspect ratio ensures shapes aren't distorted
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     plt.show()
 
-
 def plot_laser_cartesian(filename: str, row_index: int = 2, angle_min: float = 0.0):
-    # Plot a single laser scan row converted from polar to Cartesian coordinates
-    # Read header then iterate to the desired row
+    # Plot a single laser scan row converted from polar to Cartesian coordinates.
+    # Laser scanners provide distance measurements at different angles (polar),
+    # which we convert to x,y coordinates (Cartesian) for visualization.
+
+    # Read the file manually to access a specific row
     with open(filename, 'r') as f:
-        header_line = f.readline()  # skip header
+        header_line = f.readline()  # Skip header
         for i, line in enumerate(f):
             if i == row_index:
                 data_line = line.strip()
@@ -194,7 +206,7 @@ def plot_laser_cartesian(filename: str, row_index: int = 2, angle_min: float = 0
 
     ranges, angle_increment, _ = _parse_laser_line(data_line)
 
-    # Convert polar coordinates to Cartesian, filtering out invalid ranges
+    # Convert polar coordinates (distance, angle) to Cartesian (x, y)
     xs = []
     ys = []
     for i, r in enumerate(ranges):
@@ -202,10 +214,12 @@ def plot_laser_cartesian(filename: str, row_index: int = 2, angle_min: float = 0
             r_val = float(r)
         except Exception:
             continue
-        # Skip NaN, Inf, and non-positive ranges
+        # Skip NaN, Inf, and non-positive ranges (invalid measurements)
         if not math.isfinite(r_val) or r_val <= 0.0:
             continue
+        # Calculate angle for this measurement
         theta = angle_min + i * angle_increment
+        # Convert polar to Cartesian: x = r*cos(θ), y = r*sin(θ)
         xs.append(r_val * math.cos(theta))
         ys.append(r_val * math.sin(theta))
 
@@ -214,7 +228,7 @@ def plot_laser_cartesian(filename: str, row_index: int = 2, angle_min: float = 0
     plt.xlabel('x (m)')
     plt.ylabel('y (m)')
     plt.title('Laser Scan Cartesian (single row)')
-    plt.axis('equal')
+    plt.axis('equal')  # Equal aspect ratio for accurate spatial representation
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
