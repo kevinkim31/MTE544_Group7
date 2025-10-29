@@ -8,8 +8,8 @@ PI=2 # proportional and integral
 PID=3 # proportional, integral, derivative
 
 class PID_ctrl:
-    
-    def __init__(self, type_, kp=1.2,kv=0.8,ki=0.2, history_length=3, filename_="errors.csv"):
+    # kv = kd
+    def __init__(self, type_, kp=0.0,kv=0,ki=0.0, history_length=3, filename_="errors.csv"):
         
         # Data for the controller
         self.history_length=history_length

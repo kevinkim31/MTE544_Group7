@@ -38,12 +38,17 @@ class decision_maker(Node):
         # TODO Part 5: Tune your parameters here
         # in lab -> tune parameters klp, klv, kap, kav
         if motion_type == POINT_PLANNER:
-            self.controller=controller(klp=0.2, klv=0.5, kap=0.8, kav=0.6)
+           #self.controller=controller(klp=0.5, klv=0.0, kli=0.0, kap=1.0, kav=0.0, kai=0.0) # P
+            self.controller=controller(klp=0.5, klv=1.0, kli=1.0, kap=1.0, kav=0.25, kai=0.2) # PID    
+            # self.controller=controller(klp=2.0, klv=0.0, kli=0.0, kap=1.0, kav=0.0, kai=0.0)
             self.planner=planner(POINT_PLANNER)    
     
     
         elif motion_type==TRAJECTORY_PLANNER:
-            self.controller=trajectoryController(klp=0.2, klv=0.5, kap=0.8, kav=0.6)
+            #PARABOLA
+            #self.controller=trajectoryController(klp=0.3, klv=0.05, kli=1.0, kap=0.2, kav=0.05, kai=0.5)# PID
+            # SIGMOID
+            self.controller=trajectoryController(klp=0.7, klv=1.0, kli=0.2, kap=0.8, kav=0.5, kai=0.2) # PID
             self.planner=planner(TRAJECTORY_PLANNER)
 
         else:
@@ -146,7 +151,7 @@ def main(args=None):
     # TODO Part 4: instantiate the decision_maker with the proper parameters for moving the robot
     if args.motion.lower() == "point":
         # Point planner: use Twist message, /cmd_vel topic, odom_qos, and let planner handle goal point
-        DM = decision_maker(Twist, '/cmd_vel', odom_qos, None, rate=10, motion_type=POINT_PLANNER)
+        DM = decision_maker(Twist, '/cmd_vel', odom_qos, [-1,-1], rate=10, motion_type=POINT_PLANNER)
     elif args.motion.lower() == "trajectory":
         # Trajectory planner: use Twist message, /cmd_vel topic, odom_qos, and let planner handle goal point
         DM = decision_maker(Twist, '/cmd_vel', odom_qos, None, rate=10, motion_type=TRAJECTORY_PLANNER)

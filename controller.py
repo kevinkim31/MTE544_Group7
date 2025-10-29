@@ -12,7 +12,7 @@ class controller:
     
     
     # Default gains of the controller for linear and angular motions
-    def __init__(self, klp=0.2, klv=0.2, kli=0.2, kap=0.2, kav=0.2, kai=0.2):
+    def __init__(self, klp=0.0, klv=0.0, kli=0.0, kap=0.0, kav=0.0, kai=0.0):
         
         # TODO Part 5 and 6: Modify the below lines to test your PD, PI, and PID controller
         # in lab -> test P, PD, PI, PID
@@ -46,7 +46,7 @@ class controller:
 
 class trajectoryController(controller):
 
-    def __init__(self, klp=0.2, klv=0.2, kli=0.2, kap=0.2, kav=0.2, kai=0.2):
+    def __init__(self, klp=0.0, klv=0.0, kli=0.0, kap=0.0, kav=0.0, kai=0.0):
         
         super().__init__(klp, klv, kli, kap, kav, kai)
     
@@ -84,4 +84,4 @@ class trajectoryController(controller):
                                axis=1)
         closestIndex=np.argmin(distanceSquared)
 
-        return listGoals[ min(closestIndex + 3, len(listGoals) - 1) ]
+        return listGoals[ min(closestIndex + 6, len(listGoals) - 1) ]

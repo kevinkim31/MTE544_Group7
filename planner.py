@@ -23,12 +23,12 @@ class planner:
     def point_planner(self, goalPoint):
         x = goalPoint[0]
         y = goalPoint[1]
-        return x, y
+        return (x, y)
 
     # TODO Part 6: Implement the trajectories here
     def trajectory_planner(self):
         # choose trajectory type: parabola or sigmoid
-        trajectory_type = 'parabola'  # options: 'parabola', 'sigmoid'
+        trajectory_type = 'sigmoid'  # options: 'parabola', 'sigmoid'
 
         points = []
         if trajectory_type == 'parabola':
