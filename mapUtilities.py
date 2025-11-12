@@ -168,28 +168,43 @@ class mapManipulator(Node):
         return (np.array(np.floor((-origin + pos_array)/res), dtype=np.int32)) - np.array([0, h])
 
     # TODO part 4: See through this method and explain how it works to the TA
+    # This function takes a 2D array of the environment and extracts occupied cells.
+    # Builds a likelihood field to tell the probability of each cell being occupied based on its distance to the nearest obstacle.
     def make_likelihood_field(self):
         
         image_array=self.image_array
 
         from sklearn.neighbors import KDTree
         
+        # Finds all pixel locations where the value is less than 10 (occupied)
         indices = np.where(image_array < 10)
+
+        # Create an array of (x, y) indices for occupied cells
         indices_arr = np.array([indices[0], indices[1]]).T
         
+        # Convert occupied cells indices to real-world coordinates
         occupied_points = self.cell_2_position(indices_arr)
+
+        # Generate positions of all cells in the map
         all_indices = np.array([[i, j] for i in range(self.height) for j in range(self.width)])
         all_positions = self.cell_2_position(all_indices)
 
+        # Build a KD-Tree of occupied points (data struture for fast nearest-neighbor search)
         kdt=KDTree(occupied_points)
 
+        # Compute distance from every cell to closest obstacle
         dists=kdt.query(all_positions, k=1)[0][:]
+
+        # Convert distance to likelihood using Gaussian model
         probabilities=np.exp( -(dists**2) / (2*self.laser_sig**2))
         
+        # Reshape into 2D image
         likelihood_field=probabilities.reshape(image_array.shape)
         
+        # Create visual image
         likelihood_field_img=np.array(255-255*probabilities.reshape(image_array.shape), dtype=np.int32)
         
+        # Store results in object
         self.likelihood_img=likelihood_field_img
         
         self.occ_points=np.array(occupied_points)
