@@ -46,7 +46,7 @@ class decision_maker(Node):
         self.reachThreshold=0.1
 
         # TODO part 5: call the proper types
-        self.localizer=localization(...)
+        self.localizer=localization(particlesFilter)
         
         if motion_type==POINT_PLANNER:
             self.controller=controller(klp=0.05, klv=0.0, kap=0.8, kav=0.0)      
@@ -141,9 +141,9 @@ def main(args=None):
     odom_qos=QoSProfile(reliability=2, durability=2, history=1, depth=10)
     
     if args.motion == "point":
-        DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=POINT_PLANNER)
+        DM=decision_maker(Twist, "/cmd_vel", odom_qos, rate=10, motion_type=POINT_PLANNER)
     elif args.motion == "trajectory":
-        DM=decision_maker(Twist, "/cmd_vel", 10, motion_type=TRAJECTORY_PLANNER)
+        DM=decision_maker(Twist, "/cmd_vel", odom_qos, rate=10, motion_type=TRAJECTORY_PLANNER)
     else:
         print("invalid motion type", file=sys.stderr)
 
