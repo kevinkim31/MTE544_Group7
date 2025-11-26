@@ -130,7 +130,9 @@ class decision_maker(Node):
         vel_msg.angular.z=yaw_rate
         
         self.publisher.publish(vel_msg)
-        self.publishPathOnRviz2(self.goal)
+        # Only publish path to RViz if goal is a list (A* path planner)
+        if type(self.goal) is list:
+            self.publishPathOnRviz2(self.goal)
 
 
     def publishPathOnRviz2(self, path):

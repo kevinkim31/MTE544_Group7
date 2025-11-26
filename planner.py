@@ -45,18 +45,18 @@ class planner:
         endPoseCart = np.array(endPoseCart)[:2]
 
         # TODO: Convert to pixel coordinates using the m_utilites
-        startPose = self.m_utilites...
-        endPose = self.m_utilites...
+        startPose = self.m_utilites.position_2_cell(startPoseCart.reshape(1, -1))[0]
+        endPose = self.m_utilites.position_2_cell(endPoseCart.reshape(1, -1))[0]
 
         # convert to tuple
         startPose = (startPose[0], startPose[1])
         endPose = (endPose[0], endPose[1])
         # TODO: Call the A* search algorithm
-        path = ...
+        path = search(self.costMap, startPose, endPose)
         if path is None:
             return None
         
-        pathCart = self.m_utilites.cell_2_position(path)
+        pathCart = self.m_utilites.cell_2_position(np.array(path))
         pathCart_list = pathCart.tolist()
         print("Time taken for A* is ", time.time()-start_time)
 
